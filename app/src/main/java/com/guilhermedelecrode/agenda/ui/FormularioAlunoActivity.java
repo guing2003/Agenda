@@ -1,12 +1,17 @@
 package com.guilhermedelecrode.agenda.ui;
 
+import static com.guilhermedelecrode.agenda.ui.ConstatesActivities.CHAVE_ALUNO;
+
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -18,11 +23,13 @@ import com.guilhermedelecrode.agenda.model.Aluno;
 
 public class FormularioAlunoActivity extends AppCompatActivity {
 
-    public static final String TITULO_APPBAR = "Novo Aluno";
-    private static EditText campoNome;
-    private static EditText campoTelefone;
-    private static EditText campoEmail;
+    public static final String TITULO_APPBAR_EDITA_ALUNO = "Edita Aluno";
+    private static final String TITULO_APPBAR_NOVO_ALUNO = "Novo Aluno" ;
+    private EditText campoNome;
+    private EditText campoTelefone;
+    private EditText campoEmail;
     private final AlunoDAO dao = new AlunoDAO();
+    private static Aluno aluno;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,25 +41,55 @@ public class FormularioAlunoActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        setTitle(TITULO_APPBAR);
-
         inicializacaoDosCampos();
-
-        configuraBotaoSalvar();
+        carregaAluno();
     }
 
-    private void configuraBotaoSalvar() {
-        Button botao_salvar = findViewById(R.id.botao_salvar);
-        botao_salvar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.activity_formulario_aluno_menu, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 
-                Aluno alunoCriado = criaAluno();
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int itemId = item.getItemId();
+        if(itemId == R.id.activity_formulario_aluno_salvar){
+            finalizaFormulario();
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
-                salva(alunoCriado);
-            }
-        });
+    //Valida se tem um extra, se não tiver cria um novo aluno
+    private void carregaAluno() {
+        Intent dados = getIntent();
+        if (dados.hasExtra(CHAVE_ALUNO)) {
+            setTitle(TITULO_APPBAR_EDITA_ALUNO);
+            aluno = (Aluno) dados.getSerializableExtra(CHAVE_ALUNO);
+            preencheCampos();
+        } else {
+            setTitle(TITULO_APPBAR_NOVO_ALUNO);
+            aluno = new Aluno();
+        }
+    }
+
+    private void preencheCampos() {
+        campoNome.setText(aluno.getNome());
+        campoEmail.setText(aluno.getEmail());
+        campoTelefone.setText(aluno.getTelefone());
+    }
+
+
+
+    private void finalizaFormulario() {
+        preencheAluno();
+        //Valida se tem o id se não tiver cria um novo aluno
+        if (aluno.temIdValido()) {
+            dao.edita(aluno);
+        } else {
+            dao.salva(aluno);
+        }
+        finish();
     }
 
     private void inicializacaoDosCampos() {
@@ -61,17 +98,14 @@ public class FormularioAlunoActivity extends AppCompatActivity {
         campoEmail = findViewById(R.id.activity_formulario_aluno_email);
     }
 
-    private void salva(Aluno alunoCriado) {
-        dao.salva(alunoCriado);
-        finish();
-    }
-
-    private static Aluno criaAluno() {
+    private void preencheAluno() {
         String nome = campoNome.getText().toString();
         String email = campoEmail.getText().toString();
         String telefone = campoTelefone.getText().toString();
 
-        Aluno alunoCriado = new Aluno(nome, telefone, email);
-        return alunoCriado;
+        aluno.setNome(nome);
+        aluno.setEmail(email);
+        aluno.setTelefone(telefone);
+
     }
 }
