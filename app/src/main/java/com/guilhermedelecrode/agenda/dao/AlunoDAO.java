@@ -9,7 +9,7 @@ import java.util.List;
 
 public class AlunoDAO {
 
-    private final static List<Aluno> alunos = new ArrayList<>();
+    public final static List<Aluno> alunos = new ArrayList<>();
 
     private static int  contadorDeIds = 1;
 
